@@ -1,85 +1,148 @@
-package homework;
-
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.Random;
+import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
+
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
+
 import javax.crypto.spec.SecretKeySpec;
 
 public class Part1 {
 
-	public static void main(String[] args) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
-		
-		Key key = null;
-		Cipher cipher = null;
-		String s = null;
-		Keys keyC = null;
+    public static void main(String[] args) throws Exception {
+    	   
+    	boolean Alice = true;
+    	boolean Bob = true;
+    	if(args[0].equalsIgnoreCase("a")){
+    		Bob = false;
+    	}
+    	else
+    		Alice = false;
+    	
+    	if(Alice){
+    		System.out.println("Writing Alice's message to file...");
+    		GenerateKey gen = new GenerateKey();
+    		gen.genKey();
+    		gen.saveKey();
+    		Key k = gen.getKey();
+    		Encrypt e = new Encrypt();
+    		e.encrypt(args[1], k);
+    		e.saveToFile();
+    		System.out.println("Message written to file.");
+    	}
+    	if(Bob){
+    		System.out.println("Getting Alice's message...");
+    		Decrypt d = new Decrypt();
+    		d.getMessage();
+    		GenerateKey g = new GenerateKey();
+    		d.decrypt(g.getKey());
+    		String s = new String(d.getDecrypted());
+    		System.out.println("Message: " +s);
+    	}
+
+    }
+}
+
+class Decrypt{
+	byte[] message;
+	byte[] decrypted;
+	void getMessage(){
+		File path = new File("ctext.txt");
 		try {
-			File k = new File("keys.key");
-			if(!k.exists()) {
-				keyC = new Keys();
-				key = keyC.getKey();
-				FileOutputStream f = new FileOutputStream(k, false);
-				f.write(key.getEncoded());
-				f.close();
-			}
-			if(key == null)
-				key = loadKeyFromFile();
-			if(args[1] == "a" || args[1] == "A") {
-				
-			}
-			cipher = Cipher.getInstance("AES");
-			cipher.init(Cipher.ENCRYPT_MODE, key);
-			byte[] envVal = cipher.doFinal(args[0].getBytes());
-			s = new String(Base64.getEncoder().encodeToString(envVal));
+			message = Files.readAllBytes(path.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	void decrypt(Key key){
+		try {
+			Cipher c = Cipher.getInstance("AES");
+			c.init(Cipher.DECRYPT_MODE, key);
+			decrypted = c.doFinal(message);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+			e.printStackTrace();
+		} 
+	}
+	
+	byte[] getDecrypted(){
+		return decrypted;
+	}
+}
+
+class Encrypt{
+	
+	byte[] encrypted;
+	
+	void encrypt(String message, Key key) throws Exception {
+    	
+		   Cipher c = Cipher.getInstance("AES");
+           c.init(Cipher.ENCRYPT_MODE, key);
+           encrypted = c.doFinal(message.getBytes());
+         }
+	
+	void saveToFile(){
 		
-		} catch (NoSuchAlgorithmException | IOException e) {
+		try{
+			File path = new File("ctext.txt");
+			OutputStream out = new FileOutputStream(path);
+			out.write(encrypted);
+			out.close();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+}
+
+class GenerateKey{
+	
+	Key key = null;
+	void genKey(){
+        byte[] keyBytes = new byte[24];
+        try {
+			SecureRandom.getInstanceStrong().nextBytes(keyBytes);
+	        key = new SecretKeySpec(keyBytes, "AES");
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	void saveKey(){
+		
+		try{
+			File path = new File("key.txt");
+			OutputStream out = new FileOutputStream(path);
+			out.write(key.getEncoded());
+			out.close();
+		}catch(Exception e){
 			e.printStackTrace();
 		}
 		
-		try {
-			cipher.init(Cipher.DECRYPT_MODE, key);
-			byte[] decoded = Base64.getDecoder().decode(s.getBytes());
-			byte[] dec = cipher.doFinal(decoded);
-			s = new String(dec);
-		}catch(Exception e) {}
-		
-		
 	}
-
-	static Key loadKeyFromFile() {
-		Key ret = null;
+	
+	Key getKey() throws NoSuchAlgorithmException, InvalidKeySpecException{
+		byte[] holder = null;
+		File path = new File("key.txt");
+		if(path.exists()){
+			try {
+				holder = Files.readAllBytes(path.toPath());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		Key s = new SecretKeySpec(holder, "AES");
 		
-		return ret;
-	}
-
+		return s;
+		}
 }
-class Keys{
 	
-	Key k;
-	
-	Keys() {
-		byte[] b = new byte[24];
-		Random r = new Random();
-		r.nextBytes(b);
-		k = new SecretKeySpec(b, "AES");
-	}
-	
-	Key getKey() {
-		return k;
-	}
-}
