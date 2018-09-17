@@ -30,7 +30,6 @@ public class Part1 {
     		Alice = false;
     	
     	if(Alice){
-    		System.out.println("Writing Alice's message to file...");
     		GenerateKey gen = new GenerateKey();
     		gen.genKey();
     		gen.saveKey();
@@ -38,16 +37,19 @@ public class Part1 {
     		Encrypt e = new Encrypt();
     		e.encrypt(args[1], k);
     		e.saveToFile();
-    		System.out.println("Message written to file.");
+    		String s = new String(e.encrypted);
+    		System.out.println("Alice's message to file: " + s);
     	}
     	if(Bob){
-    		System.out.println("Getting Alice's message...");
+
     		Decrypt d = new Decrypt();
     		d.getMessage();
+    		String s = new String(d.message);
+    		System.out.println("Alice's ciphertext: "+ s);
     		GenerateKey g = new GenerateKey();
     		d.decrypt(g.getKey());
-    		String s = new String(d.getDecrypted());
-    		System.out.println("Message: " +s);
+    		s = new String(d.getDecrypted());
+    		System.out.println("Decrypted: " +s);
     	}
 
     }
@@ -145,4 +147,3 @@ class GenerateKey{
 		return s;
 		}
 }
-	

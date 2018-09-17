@@ -1,5 +1,3 @@
-package homework;
-
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyFactory;
@@ -47,7 +45,7 @@ public class Part2 {
 				}
 				
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(100);
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				}
@@ -59,6 +57,8 @@ public class Part2 {
 			Encrypt e = new Encrypt(privKey, pubKey);
 			try {
 				cipher = e.generateEncrypt(toCipher.getBytes());
+				String s = new String(cipher);
+				System.out.println("Alice's ciphertext: " + s);
 				FileOutputStream outputStream = new FileOutputStream("ctext.txt");
 				outputStream.write(cipher);
 				outputStream.close();
@@ -86,9 +86,10 @@ public class Part2 {
 				if(exists) {
 					waiting = false;
 					try {
-						FileInputStream in = new FileInputStream("ctext.txt");
-						cipher = in.readAllBytes();
-						in.close();
+						File in = new File("ctext.txt");
+						cipher = Files.readAllBytes(in.toPath());
+						String s = new String(cipher);
+						System.out.println("From file: " + s);
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -96,7 +97,7 @@ public class Part2 {
 				}
 				
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(100);
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				}
@@ -108,9 +109,10 @@ public class Part2 {
 				e1.printStackTrace();
 			}
 			String s = new String(decrypted);
-			System.out.println(s);
+			System.out.println("Decrypted message: "+s);
 		}
 	}
+
 
 }
 
@@ -248,164 +250,3 @@ class GenerateKeys{
 	
 	}
 }
-/*
-		String toCipher = args[1];
-		GenerateKeys init = new GenerateKeys();
-		SaveKeys save = new SaveKeys(init.pubKey, init.privKey);
-		save.writeKey();
-		PrivateKey privKey = save.getPrivateKey();
-		PublicKey pubKey = save.getPublicKey();
-		
-		Encrypt e = new Encrypt(privKey, pubKey);
-		try {
-			cipher = e.generateEncrypt(toCipher.getBytes());
-		} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException e1) {
-			e1.printStackTrace();
-		}
-		
-		Decrypt d = new Decrypt(privKey, pubKey);
-		try {
-			decrypted = d.generateDecrypt(cipher);
-		} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException e1) {
-			e1.printStackTrace();
-		}
-		String s = new String(decrypted);
-		System.out.println(s);
-	}
-
-}
-
-class Decrypt{
-	
-	PrivateKey pvk;
-	PublicKey pk;
-		
-	Decrypt(PrivateKey pvk, PublicKey pk){
-		this.pvk = pvk;
-		this.pk = pk;
-	}
-	
-	byte[] generateDecrypt(byte[] input) throws NoSuchAlgorithmException, 
-												NoSuchPaddingException, 
-												InvalidKeyException, 
-												IllegalBlockSizeException, 
-												BadPaddingException {
-		
-		byte[] retData = null;
-		
-		Cipher cipher =  Cipher.getInstance("RSA");
-		cipher.init(Cipher.DECRYPT_MODE, this.pvk);
-		retData = cipher.doFinal(input);
-	
-		return retData;
-	}
-	
-}
-
-class Encrypt{
-	
-	PrivateKey pvk;
-	PublicKey pk;
-		
-	Encrypt(PrivateKey pvk, PublicKey pk){
-		this.pvk = pvk;
-		this.pk = pk;
-	}
-	
-	byte[] generateEncrypt(byte[] input) throws NoSuchAlgorithmException, 
-												NoSuchPaddingException, 
-												InvalidKeyException, 
-												IllegalBlockSizeException, 
-												BadPaddingException {
-		
-		byte[] retData = null;
-		
-		Cipher cipher =  Cipher.getInstance("RSA");
-		cipher.init(Cipher.ENCRYPT_MODE, this.pk);
-		retData = cipher.doFinal(input);
-	
-		return retData;
-	}
-}
-
-class SaveKeys{
-	Key pub;
-	Key priv;
-	FileOutputStream out;
-	
-	SaveKeys(Key pub, Key priv){
-		
-		this.pub = pub;
-		this.priv = priv;
-	}
-	void writeKey() {
-		String outfile = "keys";
-		try {
-			out = new FileOutputStream(outfile+".key");
-			out.write(priv.getEncoded());
-			out.close();
-			
-			out = new FileOutputStream(outfile+".pub");
-			out.write(pub.getEncoded());
-			out.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	PrivateKey getPrivateKey() {
-		
-		PrivateKey pvt = null;
-		Path path = Paths.get("keys.key");
-		byte[] bytes;
-		try {
-			bytes = Files.readAllBytes(path);
-			PKCS8EncodedKeySpec ks = new PKCS8EncodedKeySpec(bytes);
-			KeyFactory kf = KeyFactory.getInstance("RSA");
-			 pvt = kf.generatePrivate(ks);
-		} catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-			e.printStackTrace();
-		}
-	
-
-		return pvt;
-	}
-	
-	PublicKey getPublicKey() {
-		
-		PublicKey pub = null;
-		Path path = Paths.get("keys.pub");
-		try {
-			byte[] bytes = Files.readAllBytes(path);
-			X509EncodedKeySpec keySpec = new X509EncodedKeySpec(bytes);
-			KeyFactory keyF = KeyFactory.getInstance("RSA");
-			pub = keyF.generatePublic(keySpec);
-		} catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) 
-			{e.printStackTrace();}
-		
-		return pub;
-	}
-}
-
-class GenerateKeys{
-	
-	KeyPairGenerator kGenerator;
-	KeyPair pair;
-	Key pubKey;
-	Key privKey;
-	GenerateKeys(){
-		
-		try {
-			kGenerator = KeyPairGenerator.getInstance("RSA");
-			kGenerator.initialize(2048);
-			pair = kGenerator.generateKeyPair();
-			pubKey = pair.getPublic();
-			privKey = pair.getPrivate();
-			
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}	
-	
-	}
-}
-*/
