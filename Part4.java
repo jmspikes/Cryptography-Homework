@@ -1,5 +1,3 @@
-package Homework4;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -85,4 +83,3 @@ class PartA{
 						+"\nNumber of Strings generated: "+iterator);		
 	}	
 }
-	

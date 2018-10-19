@@ -1,5 +1,3 @@
-package hw4;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -14,12 +12,11 @@ import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Random;
+import java.util.Base64;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
-import org.apache.commons.codec.binary.Base64;
 
 public class Part1 {
 
@@ -49,7 +46,7 @@ public class Part1 {
 			readKey = new SecretKeySpec(keyBytes, "HmacSHA256");
 			Mac mac = Mac.getInstance("HmacSHA256");
 			mac.init(readKey);
-			hash = Base64.encodeBase64String(mac.doFinal(message.getBytes()));
+			hash = Base64.getEncoder().encodeToString(mac.doFinal(message.getBytes()));
 			System.out.println("Alice HMAC: " + hash);
 			FileWriter writer = new FileWriter("mactext.txt", false);
 			writer.write(message);
@@ -79,7 +76,7 @@ public class Part1 {
 			readKey = new SecretKeySpec(keyBytes, "HmacSHA256");
 			Mac mac = Mac.getInstance("HmacSHA256");
 			mac.init(readKey);
-			hash = Base64.encodeBase64String(mac.doFinal(fMessage.getBytes()));
+			hash = Base64.getEncoder().encodeToString(mac.doFinal(fMessage.getBytes()));
 			System.out.println("Bob HMAC: " + hash);
 			if(hash.equals(fKey))
 				System.out.println("Verification successful");
